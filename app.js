@@ -216,10 +216,13 @@ const Engine = {
     }
     const ev=st.events[st.idx];
     UI.go("s-play");
-    document.getElementById("hud-day").textContent=`第 ${ev.day} 天`;
+    document.getElementById("hud-day").textContent=`第 ${ev.day} 天 / ${CONFIG.totalDays}`;
     document.getElementById("hud-shichen").textContent=ev.shichen||"";
     document.getElementById("hud-heresy").textContent=st.heresy;
-    document.getElementById("hud-bar").style.width=(st.idx/st.events.length*100)+"%";
+    // 进度条 = 当天时辰进度（辰→未→戌 逐格推进），天数显示整体进度
+    const dayTotal=st.events.reduce((n,e)=>n+(e.day===ev.day?1:0),0);
+    const dayPos=st.events.slice(0,st.idx+1).reduce((n,e)=>n+(e.day===ev.day?1:0),0);
+    document.getElementById("hud-bar").style.width=(dayPos/dayTotal*100)+"%";
     document.getElementById("ev-stag").textContent=`${CONFIG.branches[st.branch].name} · 第 ${ev.stage||"-"} 阶段`;
     document.getElementById("ev-scene").textContent=ev.scene;
     document.getElementById("ev-feedback").innerHTML="";
