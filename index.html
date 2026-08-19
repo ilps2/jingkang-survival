@@ -25,20 +25,19 @@ body{
   display:flex;align-items:center;justify-content:center;
   min-height:100vh;min-height:100dvh;
 }
-/* 中央 3:4 舞台：宽取 min(屏宽, 屏高×3/4, 480px)，垂直水平居中，内部滚动 */
+/* 中央 3:4 舞台：宽度驱动——宽=屏宽（桌面封顶 480px），高=宽×4/3；一屏全展示，禁止内部滚动 */
 #app{
-  width:min(100vw,75vh,480px);
-  width:min(100vw,75dvh,480px);
+  width:100vw;
+  max-width:480px;
   aspect-ratio:3/4;
-  max-height:100vh;max-height:100dvh;
   margin:auto;
-  padding:18px 20px calc(18px + env(safe-area-inset-bottom));
+  padding:14px 18px calc(14px + env(safe-area-inset-bottom));
   display:flex;flex-direction:column;
   background:var(--paper);
-  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overflow:hidden;
   box-shadow:0 0 70px 34px rgba(250,248,245,.95);
 }
-.screen{display:none;flex:1;flex-direction:column;justify-content:flex-start;justify-content:safe center;animation:unroll .5s ease}
+.screen{display:none;flex:1;min-height:0;flex-direction:column;justify-content:flex-start;justify-content:safe center;transform-origin:top center;animation:unroll .5s ease}
 .screen.active{display:flex}
 @keyframes unroll{from{clip-path:inset(0 0 100% 0);opacity:.3}to{clip-path:inset(0 0 0 0);opacity:1}}
 h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margin:1dvh 0 4px;font-weight:700}
@@ -143,7 +142,7 @@ h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margi
   <section class="screen" id="s-skill">
     <div class="hud"><span>第二步 · 选两项傍身之技</span><b id="skill-count">0/2</b></div>
     <div class="scene"><p>穿越者唯一的优势，是脑子里的东西。选两样：</p></div>
-    <div id="skill-list" style="overflow-y:auto;max-height:52dvh"></div>
+    <div id="skill-list"></div>
     <button class="btn primary" id="skill-next" disabled>选好了</button>
   </section>
 
@@ -233,5 +232,6 @@ h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margi
 <script src="./events-E.js?v=8"></script>
 <script src="./events-C.js?v=8"></script>
 <script src="./app.js?v=8"></script>
+<script src="./fit.js?v=1"></script>
 </body>
 </html>
