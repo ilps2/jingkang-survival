@@ -341,7 +341,7 @@ const Engine = {
     g.strokeStyle=C.faint; g.lineWidth=2; g.strokeRect(58,58,W-116,H-116);
     // 顶部
     g.fillStyle=C.faint; g.font=`38px ${SERIF}`; g.textAlign="left";
-    g.fillText("我在汴京活不过三天",100,140);
+    g.fillText("你能活到靖康元年吗",100,140);
     g.fillStyle=C.gamboge; g.textAlign="right";
     g.fillText("靖康二年 · 春",W-100,140);
     // 结局 emoji + 标题
@@ -435,7 +435,7 @@ const Engine = {
       }else{
         // 浏览器/无 SDK 环境降级：直接保存
         const a=document.createElement("a");
-        a.download="我在汴京活不过三天-结局卡.png";
+        a.download="你能活到靖康元年吗-结局卡.png";
         a.href=dataUrl;
         document.body.appendChild(a);
         a.click();
@@ -475,7 +475,7 @@ const Engine = {
     g.strokeStyle=C.faint; g.lineWidth=1.5; g.strokeRect(48,48,W-96,H-96);
     g.textAlign="center";
     g.fillStyle=C.faint; g.font=`30px ${SERIF}`;
-    g.fillText("汴 京 生 存 指 南",W/2,130);
+    g.fillText("你 能 活 到 靖 康 元 年 吗",W/2,130);
     // 印章
     g.save(); g.translate(W/2,300); g.rotate(0.06);
     g.fillStyle=C.cinnabar; g.globalAlpha=.92;
