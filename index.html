@@ -12,44 +12,74 @@
   --wash:#E8E4DC;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:#E4DDCB}
 html,body{height:100%}
 body{
-  background:var(--paper); color:var(--ink);
+  /* 3:4 沉浸式：舞台外用同色系径向渐变无缝延伸，无白边 */
+  background:var(--paper);
+  background:radial-gradient(120% 120% at 50% 50%, #FAF8F5 42%, #F1EBDF 72%, #E4DDCB 100%);
+  color:var(--ink);
   font-family:"Noto Serif SC","Songti SC",serif;
-  font-size:clamp(15px,4.2vw,18px); line-height:1.75;
-  overflow-x:hidden;
+  font-size:clamp(14px,4vw,18px); line-height:1.75;
+  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;min-height:100dvh;
 }
-#app{max-width:480px;margin:0 auto;min-height:100dvh;padding:24px 20px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
-.screen{display:none;flex:1;flex-direction:column;animation:unroll .5s ease}
+/* 中央 3:4 舞台：宽取 min(屏宽, 屏高×3/4, 480px)，垂直水平居中，内部滚动 */
+#app{
+  width:min(100vw,75vh,480px);
+  width:min(100vw,75dvh,480px);
+  aspect-ratio:3/4;
+  max-height:100vh;max-height:100dvh;
+  margin:auto;
+  padding:18px 20px calc(18px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;
+  background:var(--paper);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  box-shadow:0 0 70px 34px rgba(250,248,245,.95);
+}
+.screen{display:none;flex:1;flex-direction:column;justify-content:flex-start;justify-content:safe center;animation:unroll .5s ease}
 .screen.active{display:flex}
 @keyframes unroll{from{clip-path:inset(0 0 100% 0);opacity:.3}to{clip-path:inset(0 0 0 0);opacity:1}}
-h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margin:8dvh 0 4px;font-weight:700}
-.sub{text-align:center;color:var(--faint);font-size:.85em;letter-spacing:.3em;margin-bottom:6dvh}
+h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margin:1dvh 0 4px;font-weight:700}
+.sub{text-align:center;color:var(--faint);font-size:.85em;letter-spacing:.3em;margin-bottom:2.5dvh}
 .seal{display:inline-block;border:2px solid var(--cinnabar);color:var(--cinnabar);padding:2px 8px;font-size:.75em;letter-spacing:.2em;transform:rotate(-3deg);align-self:center;margin-bottom:16px}
 .btn{
-  display:block;width:100%;padding:14px 18px;margin:8px 0;
+  display:block;width:100%;padding:12px 18px;margin:7px 0;
   background:transparent;border:1.5px solid var(--charcoal);border-radius:6px;
   font-family:inherit;font-size:1em;color:var(--ink);text-align:center;cursor:pointer;
   transition:all .2s;
 }
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-/* 角色卡：英雄选择式横滑 */
-#branch-list{
-  display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
-  padding:6px 20px 14px;-webkit-overflow-scrolling:touch;
+/* 角色卡：上下滑动叠卡式选择器（3:4 卡片，牌堆层次） */
+#branch-deck{
+  position:relative;flex:1;min-height:0;margin:2px 0 6px;
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;
 }
-#branch-list::-webkit-scrollbar{display:none}
-.char-card{
-  flex:0 0 72%;max-width:290px;scroll-snap-align:center;margin:0;padding:0;overflow:hidden;
+#branch-deck.grabbing{cursor:grabbing}
+.deck-card{
+  position:absolute;left:0;right:0;margin:0 auto;top:50%;
+  height:94%;aspect-ratio:3/4;width:auto;max-width:86%;padding:0;overflow:hidden;
   border:1.5px solid var(--wash);border-radius:14px;background:var(--paper);
-  display:flex;flex-direction:column;align-items:stretch;
-  box-shadow:0 4px 18px rgba(60,50,40,.08);
+  box-shadow:0 6px 22px rgba(60,50,40,.14);
+  transform:translateY(-50%);
+  transition:transform .38s cubic-bezier(.22,.9,.3,1),opacity .38s ease;
+  will-change:transform;
 }
-.char-card:active{transform:scale(.97)}
-.char-img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;display:block}
-.char-name{padding:10px 8px 2px;font-size:1.02em;font-weight:600;color:var(--ink);text-align:center}
-.char-role{padding:0 8px 11px;font-size:.75em;color:var(--faint);text-align:center}
+#branch-deck.grabbing .deck-card{transition:none}
+.deck-card .char-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;display:block;pointer-events:none}
+.deck-card .char-info{
+  position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;
+  background:linear-gradient(180deg,rgba(250,248,245,0) 0%,rgba(250,248,245,.92) 38%,rgba(250,248,245,.98) 100%);
+  display:flex;flex-direction:column;align-items:center;pointer-events:none;
+}
+.deck-card .char-name{font-size:1.02em;font-weight:600;color:var(--ink);text-align:center;line-height:1.4}
+.deck-card .char-role{font-size:.72em;color:var(--faint);text-align:center;line-height:1.5}
+.deck-card.is-top .char-info{background:linear-gradient(180deg,rgba(250,248,245,0) 0%,rgba(250,248,245,.94) 40%,#FAF8F5 100%)}
+#deck-dots{display:flex;justify-content:center;gap:7px;padding:2px 0 6px}
+#deck-dots i{width:6px;height:6px;border-radius:50%;background:var(--wash);transition:all .3s}
+#deck-dots i.on{background:var(--cinnabar);transform:scale(1.35)}
 .btn.opt{text-align:left;position:relative;transition:background .3s,border-color .3s}
 .btn.opt.good{background:rgba(122,158,126,.15);border-color:var(--bamboo)}
 .btn.opt.bad{background:rgba(181,84,74,.12);border-color:var(--cinnabar)}
@@ -75,6 +105,12 @@ h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margi
 .foot{margin-top:14px;font-size:.72em;color:var(--faint);letter-spacing:.15em}
 .inkdrop{width:14px;height:14px;background:var(--ink);border-radius:50%;margin:30dvh auto 16px;animation:drop 1.2s ease infinite}
 @keyframes drop{0%{transform:scale(.2);opacity:0}40%{transform:scale(1.1);opacity:1}100%{transform:scale(1.6);opacity:0}}
+/* 封面：恢复原始字号与按钮尺寸，仅将内容整体上移（顶部对齐，压缩标题上方空白与装饰间距） */
+#s-cover{justify-content:flex-start;padding-top:1dvh}
+#s-cover h1{margin:0 0 4px}
+#s-cover .sub{margin-bottom:10px}
+#s-cover .seal{margin-bottom:10px}
+#s-cover p{line-height:1.55}
 .notice{font-size:.82em;color:var(--faint);text-align:center;margin-top:10px}
 .hint{font-size:.75em;color:var(--faint);text-align:center;margin-top:8px}
 </style>
@@ -87,7 +123,7 @@ h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margi
     <h1>你能活到<br>靖康元年吗</h1>
     <p class="sub">大宋生存指南 · 5 种身份 × 174 天</p>
     
-    <p style="text-align:center;color:var(--charcoal);margin-bottom:20px">
+    <p style="text-align:center;color:var(--charcoal);margin-bottom:8px">
       你在史书里读过宣和二年的汴京，那是它最好的样子。<br>一睁眼，已是宣和七年。东京梦华犹在，一百六十余万人口的大城——<br>你穿越而来，此时距靖康之变，只剩一百七十四天。<br>
       这里繁华绝顶，也规矩森严——<br>
       活下去，并且，活得像个人。
@@ -119,10 +155,12 @@ h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margi
 
   <section class="screen" id="s-route">
     <div class="hud"><span>选择你的身份</span></div>
-    <div class="scene"><p>客店伙计问你：客官这趟来汴京，图什么？</p>
-      <p style="text-align:center;color:var(--faint);font-size:.78em;letter-spacing:.2em">‹ 左 右 滑 动 查 看 ›</p>
+    <div class="scene" style="flex:0"><p>客店伙计问你：客官这趟来汴京，图什么？</p>
+      <p style="text-align:center;color:var(--faint);font-size:.78em;letter-spacing:.2em">⌃ 上 下 滑 动 翻 牌 · 点 当 前 牌 选 定 ⌄</p>
     </div>
-    <div id="branch-list"></div>
+    <div id="branch-deck"></div>
+    <div id="deck-dots"></div>
+    <button class="btn primary" id="btn-pick" style="flex:0;margin-top:2px">就选这个身份</button>
   </section>
 
   <section class="screen" id="s-play">
@@ -189,11 +227,11 @@ h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margi
   </section>
 </div>
 
-<script src="./events-A.js?v=7"></script>
-<script src="./events-B.js?v=7"></script>
-<script src="./events-D.js?v=7"></script>
-<script src="./events-E.js?v=7"></script>
-<script src="./events-C.js?v=7"></script>
-<script src="./app.js?v=7"></script>
+<script src="./events-A.js?v=8"></script>
+<script src="./events-B.js?v=8"></script>
+<script src="./events-D.js?v=8"></script>
+<script src="./events-E.js?v=8"></script>
+<script src="./events-C.js?v=8"></script>
+<script src="./app.js?v=8"></script>
 </body>
 </html>

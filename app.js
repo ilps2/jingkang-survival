@@ -134,11 +134,17 @@ const Engine = {
       yl.appendChild(b);
     });
 
-    const bl=document.getElementById("branch-list");
-    Object.entries(CONFIG.branches).forEach(([k,v])=>{
+    /* ---------- 叠卡式选人：上下滑动翻牌，点当前牌确认 ---------- */
+    const deck=document.getElementById("branch-deck");
+    const dots=document.getElementById("deck-dots");
+    const keys=Object.keys(CONFIG.branches);
+    let cur=0, dragY=null, dragMoved=0;
+    const cards=keys.map((k,i)=>{
+      const v=CONFIG.branches[k];
       const ready = typeof window[v.data] !== "undefined";
-      const b=UI.el("button","btn char-card");
-      const img=UI.el("img","char-img"); img.alt=v.role;
+      const b=UI.el("button","deck-card");
+      b.type="button";
+      const img=UI.el("img","char-img"); img.alt=v.role; img.draggable=false;
       // CDN 偶发断流：失败自动重试 2 次（带缓存穿透参数）
       let tries=0;
       const loadImg=()=>{ img.src=v.char+(tries?`?r=${tries}`:""); };
@@ -146,12 +152,84 @@ const Engine = {
       loadImg();
       b.appendChild(img);
       b.insertAdjacentHTML("beforeend",
-        `<span class="char-name">${v.name}</span>
-         <span class="char-role">${v.role} · ${ready?"174 天 · 专属结局":"即将开放"}</span>`);
+        `<span class="char-info"><span class="char-name">${v.name}</span>
+         <span class="char-role">${v.role} · ${ready?"174 天 · 专属结局":"即将开放"}</span></span>`);
       if(!ready){ b.disabled=true; b.style.opacity=".45"; }
-      else b.addEventListener("click",()=>Engine.start(k));
-      bl.appendChild(b);
+      deck.appendChild(b);
+      dots.appendChild(UI.el("i"));
+      return b;
     });
+
+    function layoutDeck(dy){
+      dy=dy||0;
+      cards.forEach((b,i)=>{
+        const d=i-cur;
+        let t,o,z;
+        if(d<0){ // 已翻过的牌：向上飞走淡出
+          t=`translateY(${-50-130+d*4}%) rotate(-4deg)`; o=0; z=0;
+        }else{
+          const peek=Math.min(d,3);
+          const prog=Math.max(-1,Math.min(1,dy/160)); // 拖拽进度 -1..1
+          const shift=peek*22 - prog*22;              // 拖动时后牌顶出
+          const sc=1-peek*0.055 + prog*0.055;
+          t=`translateY(calc(-50% + ${d===0?dy:(dy*0.25)-shift}px)) scale(${d===0?1:sc})`;
+          o=peek>2?0:1; z=100-d;
+        }
+        b.style.transform=t;
+        b.style.opacity=o;
+        b.style.zIndex=z;
+        b.classList.toggle("is-top", i===cur);
+      });
+      [...dots.children].forEach((dt,i)=>dt.classList.toggle("on",i===cur));
+    }
+    layoutDeck();
+
+    function step(dir){
+      const n=cur+dir;
+      if(n<0||n>=cards.length) { layoutDeck(); return; }
+      cur=n; layoutDeck();
+    }
+
+    function pickCurrent(){
+      const k=keys[cur];
+      if(typeof window[CONFIG.branches[k].data]!=="undefined") Engine.start(k);
+    }
+    document.getElementById("btn-pick").addEventListener("click",pickCurrent);
+
+    /* 触摸 + 鼠标拖拽（上下） */
+    function down(y){ dragY=y; dragMoved=0; deck.classList.add("grabbing"); }
+    function move(y){
+      if(dragY==null) return;
+      const dy=y-dragY; dragMoved=Math.max(dragMoved,Math.abs(dy));
+      layoutDeck(dy);
+    }
+    function up(y,ev){
+      if(dragY==null) return;
+      const dy=y-dragY; dragY=null; deck.classList.remove("grabbing");
+      if(dragMoved<9){ // 视为点击
+        layoutDeck();
+        const t=ev&&ev.target&&ev.target.closest?ev.target.closest(".deck-card"):null;
+        if(t){ const i=cards.indexOf(t); if(i===cur) pickCurrent(); else if(i>cur){cur=i;layoutDeck();} }
+        return;
+      }
+      if(dy<-55) step(1); else if(dy>55) step(-1); else layoutDeck();
+    }
+    deck.addEventListener("touchstart",e=>{ down(e.touches[0].clientY); },{passive:true});
+    deck.addEventListener("touchmove",e=>{ if(dragY!=null){ e.preventDefault(); move(e.touches[0].clientY); } },{passive:false});
+    deck.addEventListener("touchend",e=>{ up(e.changedTouches[0].clientY,e.changedTouches[0]); });
+    deck.addEventListener("touchcancel",()=>{ dragY=null; deck.classList.remove("grabbing"); layoutDeck(); });
+    deck.addEventListener("mousedown",e=>{ e.preventDefault(); down(e.clientY); });
+    window.addEventListener("mousemove",e=>move(e.clientY));
+    window.addEventListener("mouseup",e=>up(e.clientY,e));
+    /* 桌面滚轮 */
+    let wheelLock=false;
+    deck.addEventListener("wheel",e=>{
+      e.preventDefault();
+      if(wheelLock) return;
+      if(Math.abs(e.deltaY)<18) return;
+      wheelLock=true; setTimeout(()=>wheelLock=false,380);
+      step(e.deltaY>0?1:-1);
+    },{passive:false});
 
     const saved=localStorage.getItem(CONFIG.saveKey);
     if(saved){
