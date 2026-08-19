@@ -297,6 +297,7 @@ const Engine = {
     const st=this.state; st.ended=key; this.save();
     const e=ENDINGS[key];
     UI.go("s-end");
+    document.getElementById("end-portrait").src=CONFIG.branches[st.branch].char;
     document.getElementById("end-stag").textContent="靖康二年 · 春";
     document.getElementById("end-emoji").textContent=e.emoji;
     document.getElementById("end-title").textContent=e.title;
@@ -326,7 +327,7 @@ const Engine = {
     return p;
   },
 
-  drawEndCard(endKey, banner){
+  drawEndCard(endKey, banner, portrait){
     const e=ENDINGS[endKey], st=this.state;
     const W=1080,H=1440,cv=document.createElement("canvas");
     cv.width=W; cv.height=H;
@@ -344,20 +345,47 @@ const Engine = {
     g.fillText("你能活到靖康元年吗",100,140);
     g.fillStyle=C.gamboge; g.textAlign="right";
     g.fillText("靖康二年 · 春",W-100,140);
-    // 结局 emoji + 标题
-    g.textAlign="center"; g.font="150px serif";
-    g.fillText(e.emoji,W/2,360);
-    g.fillStyle=endKey==="liushou"?C.cinnabar:endKey==="nandu"?C.stoneblue:endKey==="yuanman"?C.gamboge:C.ink;
-    g.font=`700 110px ${SERIF}`;
-    g.fillText(e.title,W/2,540);
-    // 存活天数
-    g.fillStyle=C.charcoal; g.font=`40px ${SERIF}`;
-    g.fillText(`你在汴京活了 ${st.day} 天`,W/2,630);
-    // 稀有度
-    g.fillStyle=C.faint; g.font=`28px ${SERIF}`;
-    g.fillText(e.rare,W/2,680);
+    // 结局 emoji + 标题（有立绘时：左画像右文字；无立绘时：居中经典版式）
+    let yCursor;
+    if(portrait){
+      // 角色立绘卡（3:4，微倾斜，墨线描边）
+      const px=110,py=190,pw=240,ph=320;
+      const ir=portrait.width/portrait.height, tr=pw/ph;
+      let sw,sh,sx,sy;
+      if(ir>tr){ sh=portrait.height; sw=sh*tr; sx=(portrait.width-sw)/2; sy=0; }
+      else{ sw=portrait.width; sh=sw/tr; sx=0; sy=0; }
+      g.save();
+      g.translate(px+pw/2,py+ph/2); g.rotate(-0.03); g.translate(-pw/2,-ph/2);
+      g.fillStyle="#fff"; roundRect(g,-8,-8,pw+16,ph+16,14); g.fill();
+      g.strokeStyle=C.ink; g.lineWidth=3; roundRect(g,-8,-8,pw+16,ph+16,14); g.stroke();
+      roundRect(g,0,0,pw,ph,10); g.clip();
+      g.drawImage(portrait,sx,sy,sw,sh,0,0,pw,ph);
+      g.restore();
+      // 右侧文字列
+      const tx=400;
+      g.textAlign="left";
+      g.font="100px serif"; g.fillText(e.emoji,tx,300);
+      g.fillStyle=endKey==="liushou"?C.cinnabar:endKey==="nandu"?C.stoneblue:endKey==="yuanman"?C.gamboge:C.ink;
+      g.font=`700 92px ${SERIF}`;
+      g.fillText(e.title,tx,420);
+      g.fillStyle=C.charcoal; g.font=`38px ${SERIF}`;
+      g.fillText(`你在汴京活了 ${st.day} 天`,tx,480);
+      g.fillStyle=C.faint; g.font=`26px ${SERIF}`;
+      g.fillText(e.rare,tx,524);
+      yCursor=570;
+    }else{
+      g.textAlign="center"; g.font="150px serif";
+      g.fillText(e.emoji,W/2,360);
+      g.fillStyle=endKey==="liushou"?C.cinnabar:endKey==="nandu"?C.stoneblue:endKey==="yuanman"?C.gamboge:C.ink;
+      g.font=`700 110px ${SERIF}`;
+      g.fillText(e.title,W/2,540);
+      g.fillStyle=C.charcoal; g.font=`40px ${SERIF}`;
+      g.fillText(`你在汴京活了 ${st.day} 天`,W/2,630);
+      g.fillStyle=C.faint; g.font=`28px ${SERIF}`;
+      g.fillText(e.rare,W/2,680);
+      yCursor=700;
+    }
     // 五人合图横幅（cover 裁剪；无图时跳过，版式自动收拢）
-    let yCursor=700;
     if(banner){
       const bx=100, bw=W-200, bh=220, by=yCursor;
       const ir=banner.width/banner.height, tr=bw/bh;
@@ -420,7 +448,8 @@ const Engine = {
     hint.textContent="正在生成结局卡……";
     try{
       const banner = await this.loadImage("assets/group.jpg").catch(()=>null);
-      const cv = this.drawEndCard(this.state.ended||"nandu", banner);
+      const portrait = await this.loadImage("assets/char-"+this.state.branch+".jpg").catch(()=>null);
+      const cv = this.drawEndCard(this.state.ended||"nandu", banner, portrait);
       const dataUrl = cv.toDataURL("image/png");
       if(miniTool){
         // 大图先落临时文件，再唤起发布页（文档 §3.5 推荐路径）
