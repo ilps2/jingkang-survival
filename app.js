@@ -137,9 +137,16 @@ const Engine = {
     const bl=document.getElementById("branch-list");
     Object.entries(CONFIG.branches).forEach(([k,v])=>{
       const ready = typeof window[v.data] !== "undefined";
-      const b=UI.el("button","btn char-card",
-        `<img class="char-img" src="${v.char}" alt="${v.role}">
-         <span class="char-name">${v.name}</span>
+      const b=UI.el("button","btn char-card");
+      const img=UI.el("img","char-img"); img.alt=v.role;
+      // CDN 偶发断流：失败自动重试 2 次（带缓存穿透参数）
+      let tries=0;
+      const loadImg=()=>{ img.src=v.char+(tries?`?r=${tries}`:""); };
+      img.addEventListener("error",()=>{ if(++tries<=2) setTimeout(loadImg,400*tries); });
+      loadImg();
+      b.appendChild(img);
+      b.insertAdjacentHTML("beforeend",
+        `<span class="char-name">${v.name}</span>
          <span class="char-role">${v.role} · ${ready?"174 天 · 专属结局":"即将开放"}</span>`);
       if(!ready){ b.disabled=true; b.style.opacity=".45"; }
       else b.addEventListener("click",()=>Engine.start(k));
@@ -303,14 +310,17 @@ const Engine = {
   },
 
   /* ---------- 分享：Canvas 2D 手绘结局卡（无第三方依赖，沙箱内最稳） ---------- */
-  loadImage(src, timeout=3000){
-    return new Promise((res,rej)=>{
+  loadImage(src, timeout=3000, retries=2){
+    const attempt=(n)=>new Promise((res,rej)=>{
       const img=new Image();
       const t=setTimeout(()=>rej(new Error("img timeout")),timeout);
       img.onload=()=>{clearTimeout(t);res(img);};
       img.onerror=()=>{clearTimeout(t);rej(new Error("img load fail"));};
-      img.src=src;
+      img.src=src+(n?`?r=${n}`:"");
     });
+    let p=attempt(0);
+    for(let i=1;i<=retries;i++) p=p.catch(()=>attempt(i));
+    return p;
   },
 
   drawEndCard(endKey, banner){
