@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>我在汴京活不过三天 · 大宋生存指南</title>
+<!-- 小红书小工具规范：无内联脚本、无行内事件、无外部资源、纯离线自包含 -->
+<style>
+:root{
+  --paper:#FAF8F5; --ink:#1A1A1A; --charcoal:#4A4540; --faint:#8A8478;
+  --cinnabar:#B5544A; --gamboge:#C9A84C; --bamboo:#7A9E7E; --stoneblue:#5A7A8A;
+  --wash:#E8E4DC;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"Noto Serif SC","Songti SC",serif;
+  font-size:clamp(15px,4.2vw,18px); line-height:1.75;
+  overflow-x:hidden;
+}
+#app{max-width:480px;margin:0 auto;min-height:100dvh;padding:24px 20px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+.screen{display:none;flex:1;flex-direction:column;animation:unroll .5s ease}
+.screen.active{display:flex}
+@keyframes unroll{from{clip-path:inset(0 0 100% 0);opacity:.3}to{clip-path:inset(0 0 0 0);opacity:1}}
+h1{font-size:clamp(26px,7.5vw,34px);letter-spacing:.12em;text-align:center;margin:8dvh 0 4px;font-weight:700}
+.sub{text-align:center;color:var(--faint);font-size:.85em;letter-spacing:.3em;margin-bottom:6dvh}
+.seal{display:inline-block;border:2px solid var(--cinnabar);color:var(--cinnabar);padding:2px 8px;font-size:.75em;letter-spacing:.2em;transform:rotate(-3deg);align-self:center;margin-bottom:16px}
+.btn{
+  display:block;width:100%;padding:14px 18px;margin:8px 0;
+  background:transparent;border:1.5px solid var(--charcoal);border-radius:6px;
+  font-family:inherit;font-size:1em;color:var(--ink);text-align:center;cursor:pointer;
+  transition:all .2s;
+}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+/* 角色卡：英雄选择式横滑 */
+#branch-list{
+  display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
+  padding:6px 20px 14px;-webkit-overflow-scrolling:touch;
+}
+#branch-list::-webkit-scrollbar{display:none}
+.char-card{
+  flex:0 0 72%;max-width:290px;scroll-snap-align:center;margin:0;padding:0;overflow:hidden;
+  border:1.5px solid var(--wash);border-radius:14px;background:var(--paper);
+  display:flex;flex-direction:column;align-items:stretch;
+  box-shadow:0 4px 18px rgba(60,50,40,.08);
+}
+.char-card:active{transform:scale(.97)}
+.char-img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;display:block}
+.char-name{padding:10px 8px 2px;font-size:1.02em;font-weight:600;color:var(--ink);text-align:center}
+.char-role{padding:0 8px 11px;font-size:.75em;color:var(--faint);text-align:center}
+.btn.opt{text-align:left;position:relative;transition:background .3s,border-color .3s}
+.btn.opt.good{background:rgba(122,158,126,.15);border-color:var(--bamboo)}
+.btn.opt.bad{background:rgba(181,84,74,.12);border-color:var(--cinnabar)}
+.hud{display:flex;justify-content:space-between;align-items:baseline;font-size:.8em;color:var(--faint);border-bottom:1px solid var(--wash);padding-bottom:8px;margin-bottom:14px}
+.hud b{color:var(--cinnabar);font-size:1.15em}
+.scene{flex:1}
+.scene .stag{font-size:.75em;color:var(--gamboge);letter-spacing:.25em;margin-bottom:6px}
+.scene p{margin-bottom:18px}
+.feedback{margin:14px 0;padding:12px 14px;border-left:3px solid var(--bamboo);background:rgba(122,158,126,.08);font-size:.9em}
+.feedback.err{border-color:var(--cinnabar);background:rgba(181,84,74,.08)}
+.src{margin-top:8px;font-size:.78em;color:var(--faint)}
+.src::before{content:"📚 "}
+.progress{height:4px;background:var(--wash);border-radius:2px;margin:10px 0 18px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--gamboge);transition:width .4s}
+.resultcard{background:#fff;border:1px solid var(--wash);border-radius:10px;padding:28px 22px;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.06)}
+.resultcard .big{font-size:2.2em;margin:10px 0}
+.resultcard h2{font-size:1.4em;letter-spacing:.15em;margin-bottom:6px}
+.resultcard .hook{color:var(--charcoal);margin:14px 0;font-size:1.05em}
+.resultcard .days{color:var(--gamboge);letter-spacing:.2em;font-size:.85em}
+.resultcard .rare{color:var(--faint);font-size:.72em;letter-spacing:.15em;margin-top:2px}
+.tagsline{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0}
+.tagsline span{border:1px solid var(--stoneblue);color:var(--stoneblue);border-radius:99px;padding:2px 10px;font-size:.75em}
+.foot{margin-top:14px;font-size:.72em;color:var(--faint);letter-spacing:.15em}
+.inkdrop{width:14px;height:14px;background:var(--ink);border-radius:50%;margin:30dvh auto 16px;animation:drop 1.2s ease infinite}
+@keyframes drop{0%{transform:scale(.2);opacity:0}40%{transform:scale(1.1);opacity:1}100%{transform:scale(1.6);opacity:0}}
+.notice{font-size:.82em;color:var(--faint);text-align:center;margin-top:10px}
+.hint{font-size:.75em;color:var(--faint);text-align:center;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section class="screen active" id="s-cover">
+    <span class="seal">宣和二年 · 秋</span>
+    <h1>我在汴京活不过三天</h1>
+    <p class="sub">大宋生存指南 · 你能活到靖康元年吗？</p>
+    
+    <p style="text-align:center;color:var(--charcoal);margin-bottom:20px">
+      宣和年间，东京梦华。<br>一百六十余万人口的大城，你穿越而来。<br>
+      这里繁华绝顶，也规矩森严——<br>
+      活下去，并且，活得像个人。
+    </p>
+    <button class="btn primary" id="btn-start">翻开指南</button>
+    <button class="btn" id="btn-resume" style="display:none">继续上次旅程</button>
+    <button class="btn" id="btn-stamps" style="display:none">我的印记</button>
+    <div class="notice">5 种身份 · 174 天 · 5 种结局</div>
+  </section>
+
+  <section class="screen" id="s-job">
+    <div class="hud"><span>第一步 · 你是谁</span></div>
+    <div class="scene"><p>睁开眼，你躺在汴京城的一间客店里。怀里的身份文书写着——</p></div>
+    <div id="job-list"></div>
+  </section>
+
+  <section class="screen" id="s-skill">
+    <div class="hud"><span>第二步 · 选两项傍身之技</span><b id="skill-count">0/2</b></div>
+    <div class="scene"><p>穿越者唯一的优势，是脑子里的东西。选两样：</p></div>
+    <div id="skill-list" style="overflow-y:auto;max-height:52dvh"></div>
+    <button class="btn primary" id="skill-next" disabled>选好了</button>
+  </section>
+
+  <section class="screen" id="s-style">
+    <div class="hud"><span>第三步 · 你的处世之道</span></div>
+    <div class="scene"><p>汴京人最会看人。你打算怎么活？</p></div>
+    <div id="style-list"></div>
+  </section>
+
+  <section class="screen" id="s-route">
+    <div class="hud"><span>选择你的身份</span></div>
+    <div class="scene"><p>客店伙计问你：客官这趟来汴京，图什么？</p>
+      <p style="text-align:center;color:var(--faint);font-size:.78em;letter-spacing:.2em">‹ 左 右 滑 动 查 看 ›</p>
+    </div>
+    <div id="branch-list"></div>
+  </section>
+
+  <section class="screen" id="s-play">
+    <div class="hud">
+      <span id="hud-day">第 1 天</span>
+      <span id="hud-shichen"></span>
+      <span>异端指数 <b id="hud-heresy">0</b>/2</span>
+    </div>
+    <div class="progress"><i id="hud-bar" style="width:0%"></i></div>
+    <div class="scene">
+      <div class="stag" id="ev-stag"></div>
+      <p id="ev-scene"></p>
+      <div id="ev-opts"></div>
+      <div id="ev-feedback"></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-end">
+    <div class="resultcard" id="end-card">
+      <div class="stag" id="end-stag" style="color:var(--gamboge);letter-spacing:.25em;font-size:.75em"></div>
+      <div class="big" id="end-emoji"></div>
+      <h2 id="end-title"></h2>
+      <div class="days" id="end-days"></div>
+      <div class="rare" id="end-rare"></div>
+      <p class="hook" id="end-hook"></p>
+      <div class="tagsline" id="end-tags"></div>
+      <p class="src" id="end-source" style="text-align:left"></p>
+      <div class="foot">我在汴京活不过三天 · 5 种身份 × 5 种结局，你是哪一种</div>
+    </div>
+    <button class="btn primary" style="margin-top:16px" id="btn-share">生成结局卡 · 发笔记</button>
+    <button class="btn" id="btn-replay">再走一遍</button>
+    <div class="hint" id="share-hint"></div>
+  </section>
+
+  <section class="screen" id="s-loading">
+    <div class="inkdrop"></div>
+    <p style="text-align:center;color:var(--faint)">研墨铺纸，正在进入宣和二年……</p>
+    <p id="load-err" style="text-align:center;color:#b5544a;font-size:.8em;max-width:80%;margin:12px auto 0"></p>
+  </section>
+
+  <!-- 里程碑印章卡（非阻塞：不分享也能继续玩） -->
+  <section class="screen" id="s-stamp">
+    <div class="resultcard" id="stamp-card" style="padding:22px 18px">
+      <div class="stag" style="color:var(--gamboge);letter-spacing:.25em;font-size:.72em">汴京生存 · 里程碑</div>
+      <div class="big" id="stamp-emoji" style="margin:6px 0"></div>
+      <h2 id="stamp-title"></h2>
+      <div class="days" id="stamp-days"></div>
+      <p class="hook" id="stamp-hook" style="font-size:.95em"></p>
+      <div class="rare" id="stamp-rare"></div>
+      <div class="foot">大宋生存指南 · 你在汴京能活几天</div>
+    </div>
+    <button class="btn primary" style="margin-top:14px" id="btn-stamp-share">发笔记炫耀</button>
+    <button class="btn" id="btn-stamp-continue">继续活下去</button>
+    <div class="hint" id="stamp-hint"></div>
+  </section>
+
+  <!-- 我的印记 -->
+  <section class="screen" id="s-stamps">
+    <div class="hud"><span>我的印记</span><b id="stamps-count"></b></div>
+    <div class="scene"><p style="color:var(--charcoal)">你在汴京活过的每一天，都算数。</p></div>
+    <div id="stamps-list"></div>
+    <button class="btn" id="btn-stamps-back">返回</button>
+  </section>
+</div>
+
+<script src="./events-A.js"></script>
+<script src="./events-B.js"></script>
+<script src="./events-D.js"></script>
+<script src="./events-E.js"></script>
+<script src="./events-C.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
